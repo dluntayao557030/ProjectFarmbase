@@ -69,17 +69,16 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                $uploadResult = Cloudinary::upload(
+                $result = Cloudinary::uploadApi()->upload(
                     $request->file('supply_image')->getRealPath(),
                     [
                         'folder' => 'barn_supplies',
-                        'use_filename' => true,
-                        'unique_filename' => true,
                     ]
                 );
-                $imgUrl = $uploadResult->getSecurePath();
+
+                $imgUrl = $result['secure_url'];   // v3 returns array
             } catch (\Exception $e) {
-                \Log::error('Cloudinary Upload Error (Store): ' . $e->getMessage());
+                \Log::error('Cloudinary v3 Upload Error: ' . $e->getMessage());
                 return redirect()->back()
                                  ->withInput()
                                  ->with('error', 'Image upload failed: ' . $e->getMessage());
@@ -116,17 +115,16 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                $uploadResult = Cloudinary::upload(
+                $result = Cloudinary::uploadApi()->upload(
                     $request->file('supply_image')->getRealPath(),
                     [
                         'folder' => 'barn_supplies',
-                        'use_filename' => true,
-                        'unique_filename' => true,
                     ]
                 );
-                $imgUrl = $uploadResult->getSecurePath();
+
+                $imgUrl = $result['secure_url'];
             } catch (\Exception $e) {
-                \Log::error('Cloudinary Upload Error (Update): ' . $e->getMessage());
+                \Log::error('Cloudinary v3 Update Error: ' . $e->getMessage());
                 return redirect()->back()
                                  ->withInput()
                                  ->with('error', 'Image upload failed: ' . $e->getMessage());
