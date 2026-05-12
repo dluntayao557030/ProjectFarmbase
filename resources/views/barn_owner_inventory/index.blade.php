@@ -1,9 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Inventory')
+@section('title', 'Supplies')
 
 @section('hero-text')
-    Register your farm's supplies in the barn inventory. 📦
+    Register your farm's supplies in the barn inventory 📦
+@endsection
+
+@section('hero-text-mobile')
+    📦 Register farm supplies
 @endsection
 
 @push('styles')
@@ -13,6 +17,8 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
 
     .page-title {
@@ -48,7 +54,6 @@
         box-shadow: 0 2px 10px rgba(20,50,8,0.08);
     }
 
-    
     .table-toolbar {
         display: flex;
         align-items: center;
@@ -56,6 +61,8 @@
         padding: 0.9rem 1.2rem;
         border-bottom: 1px solid var(--green-border);
         background: #ffffff;
+        flex-wrap: wrap;
+        gap: 0.8rem;
     }
 
     .tbl-title {
@@ -63,6 +70,13 @@
         font-size: 0.95rem;
         font-weight: 800;
         color: var(--text-dark);
+    }
+
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
     }
 
     .search-input {
@@ -94,9 +108,23 @@
         cursor: pointer;
     }
 
+    .filter-dropdown {
+        display: none;
+        position: absolute;
+        background: #fff;
+        border: 1px solid var(--green-border);
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 4px 15px rgba(20,50,8,0.15);
+        z-index: 100;
+        margin-top: 5px;
+        width: 180px;
+    }
+
+    .filter-dropdown.show { display: block; }
+
     .inv-table {
         width: 100%;
-        height: 100%;
         border-collapse: collapse;
         font-family: var(--font);
         font-size: 0.8rem;
@@ -114,96 +142,64 @@
         white-space: nowrap;
     }
 
-    .inv-table td:nth-child(6),
-    .inv-table td:nth-child(7) { 
-        text-align: right;
-    }
-
     .inv-table tbody tr {
         border-bottom: 1px solid #e8f0e0;
         transition: background 0.15s;
-    }
-
-    .inv-table th:nth-child(1), .inv-table td:nth-child(1) { width: 68px; text-align: center; }   /* Image */
-    .inv-table th:nth-child(2), .inv-table td:nth-child(2) { width: 95px; text-align: center; }   /* ID */
-    .inv-table th:nth-child(5), .inv-table td:nth-child(5) { text-align: right; width: 90px; }    /* Stock */
-    .inv-table th:nth-child(6), .inv-table td:nth-child(6) { text-align: right; width: 110px; }   /* Reorder Level */
-    .inv-table th:nth-child(7), .inv-table td:nth-child(7) { text-align: center; }                /* Status */
-    .inv-table th:nth-child(8), .inv-table td:nth-child(8) { text-align: center; width: 110px; }  /* Actions */
-
-    .badge-status {
-        display: inline-block;
-        padding: 0.25rem 0.7rem;
-        border-radius: 20px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        white-space: nowrap;
+        cursor: pointer;
     }
 
     .inv-table tbody tr:hover { background: #f3faea; }
+
+    .row-highlight {
+        background-color: #e8f5e0 !important;
+        transition: background-color 0.1s ease;
+    }
+
     .inv-table tbody td {
         padding: 0.6rem 0.8rem;
         color: var(--text-dark);
         vertical-align: middle;
     }
 
-    .supply-thumb {
-        width: 44px; 
-        height: 44px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid var(--green-border);
+    .inv-table th:nth-child(1), .inv-table td:nth-child(1) { width: 68px; text-align: center; }
+    .inv-table th:nth-child(2), .inv-table td:nth-child(2) { width: 95px; text-align: center; }
+    .inv-table th:nth-child(5), .inv-table td:nth-child(5) { text-align: right; width: 90px; }
+    .inv-table th:nth-child(6), .inv-table td:nth-child(6) { text-align: right; width: 110px; }
+    .inv-table th:nth-child(7), .inv-table td:nth-child(7) { text-align: center; }
+    .inv-table th:nth-child(8), .inv-table td:nth-child(8) { text-align: center; width: 110px; }
+
+    .pagination-wrapper {
+        padding: 1rem 1.2rem;
+        border-top: 1px solid var(--green-border);
+        background: #ffffff;
     }
 
-    .supply-thumb-placeholder {
-        width: 44px; 
-        height: 44px;
-        border-radius: 6px;
-        background: #e8f0e0;
-        display: flex; 
-        align-items: center; 
+    .pagination {
+        display: flex;
         justify-content: center;
-        font-size: 1.2rem; 
-        color: #aaa;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        margin: 0;
+    }
+    .pagination .page-item .page-link {
+        background: #fff;
         border: 1px solid var(--green-border);
+        color: var(--green-dark);
+        font-family: var(--font);
+        font-size: 0.8rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 5px;
+        transition: 0.1s;
     }
-
-    .supply-id-tag {
-        font-weight: 700;
-        color: var(--green-mid);
-        font-size: 0.72rem;
-        letter-spacing: 0.04em;
+    .pagination .page-item.active .page-link {
+        background: var(--green-main);
+        border-color: var(--green-main);
+        color: #fff;
     }
-
-    .badge-status {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border-radius: 20px;
-        font-size: 0.7rem;
-        font-weight: 700;
+    .pagination .page-item .page-link:hover {
+        background: var(--green-pale);
+        transform: translateY(-1px);
     }
-
-    .badge-low      { background: #fde8e8; color: #856404; }
-    .badge-ok       { background: var(--green-pale); color: var(--green-dark); }
-    .badge-out      { background: #fff3cd; color: #c0392b;; }
-    .badge-inactive { background: #f0f0f0; color: #777; }
-
-    .action-btns { display: flex; align-items: center; gap: 0.4rem; }
-
-    .btn-action {
-        width: 28px; 
-        height: 28px;
-        border: none; 
-        border-radius: 6px;
-        cursor: pointer;
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        font-size: 0.85rem;
-        transition: transform 0.1s;
-    }
-
-    .btn-action:hover { transform: scale(1.15); }
 
     .empty-row td {
         text-align: center !important;
@@ -211,64 +207,114 @@
         font-size: 0.96rem;
         border: none !important;
         background: #f8fbf4;
+        padding: 4rem 2rem !important;
     }
 
-    .barn-name-highlight {
+    .supply-thumb {
+        width: 44px; height: 44px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--green-border);
+    }
+    .supply-thumb-placeholder {
+        width: 44px; height: 44px;
+        border-radius: 6px;
+        background: #e8f0e0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; color: #aaa;
+        border: 1px solid var(--green-border);
+    }
+    .supply-id-tag {
         font-weight: 700;
-        color: #e8b820;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        color: var(--green-mid);
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
     }
-
-    .filter-dropdown {
-        display: none;
-        position: absolute;
+    .badge-status {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    .badge-low      { background: #fde8e8; color: #856404; }
+    .badge-ok       { background: var(--green-pale); color: var(--green-dark); }
+    .badge-out      { background: #fff3cd; color: #c0392b; }
+    .badge-inactive { background: #f0f0f0; color: #777; }
+    .action-btns {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        justify-content: flex-end;
+    }
+    .btn-action {
+        width: 28px; height: 28px;
+        border: none; border-radius: 6px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem;
+        transition: transform 0.1s;
         background: #fff;
         border: 1px solid var(--green-border);
-        border-radius: 8px;
-        padding: 1rem;
-        box-shadow: 0 4px 15px rgba(20,50,8,0.15);
-        z-index: 100;
-        margin-top: 5px;
-        width: 180px;
     }
-
-    .filter-dropdown.show { display: block; }
-
-    /* Toast Notification */
+    .btn-action:hover { transform: scale(1.15); background: var(--green-pale); }
     .fb-toast {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: #2e7d32;
-        color: white;
-        padding: 14px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        font-family: var(--font);
-        font-size: 0.95rem;
-        font-weight: 600;
-        display: none;
-        align-items: center;
-        gap: 8px;
-        z-index: 10000;
-        min-width: 280px;
-        transition: all 0.3s ease;
+        position: fixed; bottom: 24px; right: 24px;
+        background: #2e7d32; color: white;
+        padding: 14px 20px; border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        font-family: var(--font); font-size: 0.95rem; font-weight: 600;
+        display: none; align-items: center; gap: 8px;
+        z-index: 10000; min-width: 280px; transition: all 0.3s ease;
     }
+    .fb-toast.show { display: flex; }
+    .fb-toast.error { background: #c62828; }
 
-    .fb-toast.show {
-        display: flex;
-    }
-
-    .fb-toast.error {
-        background: #c62828;
+    @media (max-width: 768px) {
+        .page-header { flex-direction: column; align-items: stretch; }
+        .table-toolbar { flex-direction: column; align-items: stretch; }
+        .toolbar-right { flex-direction: column; align-items: stretch; }
+        .search-input, .btn-filter { width: 100%; text-align: center; }
+        .filter-dropdown { left: 0; right: auto; width: 100%; }
+        .inv-table thead { display: none; }
+        .inv-table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--green-border);
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 0.5rem;
+        }
+        .inv-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #e8f0e0;
+        }
+        .inv-table tbody td:last-child { border-bottom: none; }
+        .inv-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: var(--green-mid);
+            width: 40%;
+            flex-shrink: 0;
+        }
+        .inv-table td:nth-child(1), .inv-table td:nth-child(2),
+        .inv-table td:nth-child(5), .inv-table td:nth-child(6),
+        .inv-table td:nth-child(7), .inv-table td:nth-child(8) {
+            width: auto;
+            text-align: left;
+        }
+        .action-btns { justify-content: flex-end; }
     }
 </style>
 @endpush
 
 @section('content')
-
 <div class="page-header">
-    <div class="page-title">Inventory</div>
+    <div class="page-title">Supplies</div>
     <button class="btn-add" onclick="openModal('addSupplyModal')">+ Add Supply</button>
 </div>
 
@@ -301,22 +347,22 @@
         </div>
     </div>
 
-   <div style="overflow-x:auto; min-height: 400px;">
-    <table class="inv-table" id="invTable">
-        <thead>
-            <tr>
-                <th>Image</th>
-                <th>ID</th>
-                <th>Supply</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Reorder Level</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($supplies as $supply)
+    <div style="overflow-x:auto;">
+        <table class="inv-table" id="invTable">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>ID</th>
+                    <th>Supply</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Reorder Level</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($supplies as $supply)
                 @php
                     $catName = $supply->category->category_name ?? 'N/A';
                     $supId   = strtoupper(substr($catName, 0, 3)) . str_pad($supply->id, 4, '0', STR_PAD_LEFT);
@@ -326,36 +372,32 @@
                     $badgeLabel = $isOut ? 'Out of Stock' : ($isLow ? 'Low Stock' : 'In Stock');
                     $isActive = $supply->supply_status === 'active';
                 @endphp
-                <tr data-name="{{ strtolower($supply->supply_name) }}"
+                <tr data-supply-id="{{ $supply->id }}"
+                    data-name="{{ strtolower($supply->supply_name) }}"
                     data-category="{{ strtolower($catName) }}"
                     data-status="{{ strtolower($badgeLabel) }}"
                     class="{{ !$isActive ? 'table-secondary opacity-75' : '' }}">
-
-                    <td>
+                    <td data-label="Image">
                         @if($supply->supply_img_path)
-                            <img src="{{ asset('storage/' . $supply->supply_img_path) }}" 
-                                 class="supply-thumb" alt="{{ $supply->supply_name }}">
+                            <img src="{{ asset('storage/' . $supply->supply_img_path) }}" class="supply-thumb" alt="{{ $supply->supply_name }}">
                         @else
                             <div class="supply-thumb-placeholder">📦</div>
                         @endif
                     </td>
-                    <td><span class="supply-id-tag">{{ $supId }}</span></td>
-                    <td><strong>{{ $supply->supply_name }}</strong></td>
-                    <td>{{ $catName }}</td>
-                    <td>{{ $supply->stock }}</td>
-                    <td>{{ $supply->reorder_level }}</td>
-                    <td>
+                    <td data-label="ID"><span class="supply-id-tag">{{ $supId }}</span></td>
+                    <td data-label="Supply"><strong>{{ $supply->supply_name }}</strong></td>
+                    <td data-label="Category">{{ $catName }}</td>
+                    <td data-label="Stock">{{ $supply->stock }}</td>
+                    <td data-label="Reorder Level">{{ $supply->reorder_level }}</td>
+                    <td data-label="Status">
                         <span class="badge-status {{ $badgeClass }}">{{ $badgeLabel }}</span>
                         @if(!$isActive)
                             <span class="badge-status badge-inactive ms-1">Inactive</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-label="Actions">
                         <div class="action-btns">
-                            <button class="btn-action btn-view" title="View" onclick="openViewSupplyModal({{ $supply->id }})">👁</button>
                             <button class="btn-action btn-edit" title="Edit" onclick="openEditSupplyModal({{ $supply->id }})">✎</button>
-                            
-                            @php $isActive = $supply->supply_status === 'active'; @endphp
                             <button class="btn-action" 
                                     title="{{ $isActive ? 'Deactivate Supply' : 'Reactivate Supply' }}"
                                     style="background: {{ $isActive ? '#c0392b' : '#28a745' }}; color:white;"
@@ -365,16 +407,22 @@
                         </div>
                     </td>
                 </tr>
-            @empty
-                <tr class="empty-row">
-                    <td colspan="8">
-                        No supplies found. Click <strong>+ Add Supply</strong> to get started.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
+                @empty
+                    <tr class="empty-row">
+                        <td colspan="8">
+                            No supplies found. Click <strong>+ Add Supply</strong> to get started.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    @if(method_exists($supplies, 'links'))
+        <div class="pagination-wrapper">
+            {{ $supplies->withQueryString()->links('pagination::bootstrap-4') }}
+        </div>
+    @endif
 </div>
 
 @include('barn_owner_inventory.modals.add_supply')
@@ -382,17 +430,13 @@
 @include('barn_owner_inventory.modals.view_supply')
 @include('barn_owner_inventory.modals.delete_supply')
 
-
 <div class="fb-toast" id="fbToast"></div>
-
-<script>
-    const suppliesData = {!! json_encode($suppliesData ?? []) !!};
-</script>
-
 @endsection
 
 @push('scripts')
 <script>
+    const suppliesData = {!! json_encode($suppliesData ?? []) !!};
+
     function openModal(id)  { document.getElementById(id).classList.add('show'); }
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
@@ -405,7 +449,6 @@
         if (!s) return;
 
         document.getElementById('viewSupTitle').textContent = s.supply_name;
-
         const imgWrap = document.getElementById('viewSupImgWrap');
         imgWrap.innerHTML = s.img_url 
             ? `<img src="${s.img_url}" class="view-img" alt="${s.supply_name}">` 
@@ -445,59 +488,45 @@
     }
 
     function openEditSupplyModal(id) {
-    const s = suppliesData.find(x => x.id === id);
-    if (!s) return;
-
-    document.getElementById('editSupId').value           = s.display_id;
-    document.getElementById('editSupName').value         = s.supply_name;
-    document.getElementById('editSupCategoryId').value   = s.category_id;
-    document.getElementById('editSupReorderLevel').value = s.reorder_level;
-
-    const currentImgDiv = document.getElementById('editSupCurrentImg');
-    const currentImgEl  = document.getElementById('editSupCurrentImgEl');
-    
-    if (s.img_url) {
-        currentImgEl.src = s.img_url;
-        currentImgDiv.style.display = 'block';
-    } else {
-        currentImgDiv.style.display = 'none';
-    }
-
-    document.getElementById('editSupPreview').style.display = 'none';
-
-    document.getElementById('editSupplyForm').action = s.edit_url;
-
-    openModal('editSupplyModal');
-}
-
-    function openDeleteSupplyModal(id, name) {
         const s = suppliesData.find(x => x.id === id);
         if (!s) return;
-        document.getElementById('deleteSupplyName').textContent = name;
-        document.getElementById('deleteSupplyForm').action = s.delete_url;
-        openModal('deleteSupplyModal');
+
+        document.getElementById('editSupId').value           = s.display_id;
+        document.getElementById('editSupName').value         = s.supply_name;
+        document.getElementById('editSupCategoryId').value   = s.category_id;
+        document.getElementById('editSupReorderLevel').value = s.reorder_level;
+
+        const currentImgDiv = document.getElementById('editSupCurrentImg');
+        const currentImgEl  = document.getElementById('editSupCurrentImgEl');
+        if (s.img_url) {
+            currentImgEl.src = s.img_url;
+            currentImgDiv.style.display = 'block';
+        } else {
+            currentImgDiv.style.display = 'none';
+        }
+        document.getElementById('editSupPreview').style.display = 'none';
+        document.getElementById('editSupplyForm').action = s.edit_url;
+        openModal('editSupplyModal');
     }
 
     function toggleSupplyStatus(id) {
-    const supply = suppliesData.find(s => s.id === id);
-    if (!supply) return;
+        const supply = suppliesData.find(s => s.id === id);
+        if (!supply) return;
 
-    const isActive = supply.supply_status === 'active';
-    
-    const title = isActive ? 'Deactivate Supply' : 'Reactivate Supply';
-    const message = isActive 
-        ? `You are about to deactivate <strong>${supply.supply_name}</strong>.<br>This supply will be marked as inactive.`
-        : `You are about to reactivate <strong>${supply.supply_name}</strong>.`;
+        const isActive = supply.supply_status === 'active';
+        const title = isActive ? 'Deactivate Supply' : 'Reactivate Supply';
+        const message = isActive 
+            ? `You are about to deactivate <strong>${supply.supply_name}</strong>.<br>This supply will be marked as inactive.`
+            : `You are about to reactivate <strong>${supply.supply_name}</strong>.`;
 
-    document.getElementById('deleteSupplyTitle').textContent = title;
-    document.getElementById('deleteSupplyMessage').innerHTML = message;
-    document.getElementById('deleteSubmitBtn').textContent = isActive ? 'Yes, Deactivate' : 'Yes, Reactivate';
+        document.getElementById('deleteSupplyTitle').textContent = title;
+        document.getElementById('deleteSupplyMessage').innerHTML = message;
+        document.getElementById('deleteSubmitBtn').textContent = isActive ? 'Yes, Deactivate' : 'Yes, Reactivate';
 
-    const form = document.getElementById('deleteSupplyForm');
-    form.action = supply.delete_url;
-
-    openModal('deleteSupplyModal');
-}
+        const form = document.getElementById('deleteSupplyForm');
+        form.action = supply.delete_url;
+        openModal('deleteSupplyModal');
+    }
 
     function previewFile(input, previewId) {
         const el = document.getElementById(previewId);
@@ -532,6 +561,20 @@
         if (wrap && !wrap.contains(e.target)) {
             document.getElementById('filterDropdown').classList.remove('show');
         }
+    });
+
+    // Double‑click row → view modal; single‑click → highlight
+    document.querySelectorAll('#invTable tbody tr').forEach(row => {
+        row.addEventListener('dblclick', function(e) {
+            if (e.target.closest('.btn-action')) return;
+            const supplyId = this.dataset.supplyId;
+            if (supplyId) openViewSupplyModal(parseInt(supplyId));
+        });
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-action')) return;
+            this.classList.add('row-highlight');
+            setTimeout(() => this.classList.remove('row-highlight'), 300);
+        });
     });
 
     @if($errors->any() && old('_token'))

@@ -3,9 +3,11 @@
 @section('title', 'Reports')
 
 @section('hero-text')
-    Create the monthly reports here for your barn. 📝
+    Create the monthly reports here for your barn 📝
 @endsection
-
+@section('hero-text-mobile')
+    📝 Create barn reports 
+@endsection
 @push('styles')
 <style>
     .page-header {
@@ -322,6 +324,62 @@
         .rpt-table-wrap { display: block !important; }
         .empty-state { display: none !important; }
     }
+
+    /* === Mobile Responsiveness Additions === */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .btn-export {
+        width: 100%;
+        justify-content: center;
+    }
+    .report-type-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .report-type-select {
+        width: 100%;
+    }
+    .report-desc {
+        margin-left: 0;
+        text-align: left;
+        max-width: 100%;
+    }
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-group {
+        width: 100%;
+    }
+    .filter-control {
+        width: 100%;
+        min-width: unset;
+    }
+    .filter-actions {
+        margin-left: 0;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .btn-generate, .btn-summary {
+        width: 100%;
+        text-align: center;
+    }
+    .summary-grid {
+        flex-direction: column;
+    }
+    .summary-item {
+        min-width: unset;
+    }
+    .rpt-table-wrap {
+        overflow-x: auto;
+    }
+    .rpt-table {
+        min-width: 600px;  /* ensures horizontal scroll on small screens */
+    }
+}
 </style>
 @endpush
 

@@ -304,7 +304,7 @@
             
             <!-- Mobile short version -->
             <span class="hero-text-mobile">
-                Let's get to work, {{ Auth::user()->first_name ?? 'Staff' }} 🌾
+                Let's get to work, {{ $currentUser->first_name ?? 'Staff' }} 🌾
             </span>
         </div>
     </div>
@@ -320,6 +320,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- PERMANENT MODAL FIX: root container and relocation script -->
+<div id="modal-root"></div>
+<script>
+    (function relocateModals() {
+        const modalRoot = document.getElementById('modal-root');
+        if (!modalRoot) return;
+        const modals = document.querySelectorAll('.fb-modal-backdrop, .kpi-modal-backdrop, .modal-backdrop');
+        modals.forEach(modal => {
+            if (modal.parentNode !== modalRoot) {
+                modalRoot.appendChild(modal);
+            }
+        });
+    })();
+</script>
 
 @stack('scripts')
 </body>

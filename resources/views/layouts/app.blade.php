@@ -274,6 +274,13 @@
             letter-spacing: 0.02em;
         }
 
+        /* Responsive Hero Text */
+        .hero-text-mobile { display: none; }
+        @media (max-width: 768px) {
+            .hero-text-desktop { display: none; }
+            .hero-text-mobile { display: inline; }
+        }
+
         .content-area {
             padding: 1.2rem 1.5rem 2rem;
             min-height: calc(100vh - var(--navbar-h) - 120px);
@@ -288,6 +295,43 @@
             color: var(--green-dark);
             margin-bottom: 1rem; 
             font-weight: 600;
+        }
+
+        /* ==================== MOBILE RESPONSIVENESS ==================== */
+        @media (max-width: 768px) {
+            :root {
+                --navbar-h: 58px;
+                --sidebar-w: 78px;
+            }
+            .fb-navbar {
+                height: 58px;
+                padding: 0 0.9rem;
+                gap: 0.6rem;
+            }
+            .fb-navbar .barn-icon { height: 36px; }
+            .fb-navbar .barn-name { font-size: 0.98rem; max-width: 180px; }
+            .fb-navbar .user-avatar { width: 34px; height: 34px; }
+            .fb-navbar .user-name { display: none; }
+            .btn-logout {
+                padding: 0.25rem 0.65rem;
+                font-size: 0.78rem;
+            }
+            .fb-hero { height: 110px; }
+            .fb-hero .hero-text {
+                font-size: 1.25rem;
+                padding: 1rem;
+            }
+            .content-area {
+                padding: 1rem 1.1rem 1.8rem;
+            }
+            .sidebar-item .s-label {
+                font-size: 0.58rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .fb-navbar .hamburger { font-size: 1.4rem; padding: 0.4rem; }
+            .fb-hero .hero-text { font-size: 1.15rem; }
         }
     </style>
 
@@ -337,7 +381,7 @@
     <a href="{{ route('inventory.index') }}" class="sidebar-item {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
         <img src="/images/icons/Inventory.png" class="s-icon s-icon-default" alt="">
         <img src="/images/icons/InventoryClicked.png" class="s-icon s-icon-active" alt="">
-        <span class="s-label">Inventory</span>
+        <span class="s-label">Supplies</span>
     </a>
 
     <a href="{{ route('suppliers.index') }}" class="sidebar-item {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
@@ -365,7 +409,12 @@
         <div class="hero-bg"></div>
         <div class="hero-overlay"></div>
         <div class="hero-text">
-            @yield('hero-text', 'Welcome to Farmbase.')
+            <span class="hero-text-desktop">
+                @yield('hero-text', 'Welcome to Farmbase.')
+            </span>
+            <span class="hero-text-mobile">
+                @yield('hero-text-mobile', '📊 Farmbase – ' . ($currentUser->first_name ?? 'Admin'))
+            </span>
         </div>
     </div>
 
@@ -404,6 +453,21 @@
             document.body.classList.add('sidebar-collapsed');
             hamburger.textContent = '☰';
         }
+    })();
+</script>
+
+<!-- PERMANENT MODAL FIX: root container and relocation script -->
+<div id="modal-root"></div>
+<script>
+    (function relocateModals() {
+        const modalRoot = document.getElementById('modal-root');
+        if (!modalRoot) return;
+        const modals = document.querySelectorAll('.fb-modal-backdrop, .kpi-modal-backdrop, .modal-backdrop');
+        modals.forEach(modal => {
+            if (modal.parentNode !== modalRoot) {
+                modalRoot.appendChild(modal);
+            }
+        });
     })();
 </script>
 

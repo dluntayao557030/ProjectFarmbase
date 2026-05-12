@@ -5,6 +5,9 @@
 @section('hero-text')
     Add barn staff to do stock transactions. 🧑‍🌾
 @endsection
+@section('hero-text-mobile')
+    🧑‍🌾 Add barn staff 
+@endsection
 
 @push('styles')
 <style>
@@ -13,15 +16,15 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
-
     .page-title {
         font-family: var(--font);
         font-size: 1.5rem;
         font-weight: 800;
         color: var(--gold-mid);
     }
-
     .btn-add {
         background: var(--green-main);
         color: #fff;
@@ -34,7 +37,6 @@
         cursor: pointer;
         transition: background 0.2s, transform 0.1s;
     }
-
     .btn-add:hover { background: var(--green-dark); transform: translateY(-1px); }
 
     .table-card {
@@ -48,9 +50,12 @@
     .table-toolbar {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         padding: 0.9rem 1.2rem;
         border-bottom: 1px solid var(--green-border);
         background: #f0f7e8;
+        flex-wrap: wrap;
+        gap: 0.8rem;
     }
 
     .search-input {
@@ -67,17 +72,19 @@
         background-repeat: no-repeat;
         background-position: 0.6rem center;
     }
-
     .search-input:focus { border-color: var(--green-main); }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
 
     .stf-table {
         width: 100%;
         border-collapse: collapse;
         font-family: var(--font);
         font-size: 0.8rem;
-        table-layout: fixed;
+        table-layout: auto;
     }
-
     .stf-table thead tr { background: var(--green-main); }
     .stf-table thead th {
         padding: 0.6rem 0.9rem;
@@ -88,31 +95,36 @@
         text-transform: uppercase;
         white-space: nowrap;
     }
-
     .stf-table tbody tr {
         border-bottom: 1px solid #e8f0e0;
         transition: background 0.15s;
+        cursor: pointer;
     }
-
     .stf-table tbody tr:hover { background: #f3faea; }
+    .row-highlight {
+        background-color: #e8f5e0 !important;
+        transition: background-color 0.1s ease;
+    }
     .stf-table tbody td {
         padding: 0.65rem 0.9rem;
         color: var(--text-dark);
         vertical-align: middle;
     }
-
     .stf-id-tag {
         font-weight: 700;
         color: var(--green-mid);
         font-size: 0.72rem;
         letter-spacing: 0.04em;
     }
-
     .badge-active   { background: var(--green-pale); color: var(--green-dark); padding:0.2rem 0.6rem; border-radius:20px; font-size:0.7rem; font-weight:700; }
     .badge-inactive { background: #f0f0f0; color: #777; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.7rem; font-weight:700; }
 
-    .action-btns { display: flex; align-items: center; gap: 0.4rem; }
-
+    .action-btns {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        justify-content: flex-end;
+    }
     .btn-action {
         width: 28px; height: 28px;
         border: none; border-radius: 6px;
@@ -120,21 +132,83 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 0.85rem;
         transition: transform 0.1s;
+        background: #fff;
+        border: 1px solid var(--green-border);
     }
-
-    .btn-action:hover { transform: scale(1.15); }
+    .btn-action:hover { transform: scale(1.15); background: var(--green-pale); }
 
     .empty-row td {
         text-align: center;
-        padding: 3rem;
+        padding: 4rem 2rem !important;
         color: #aaa;
         font-size: 0.9rem;
+        background: #f8fbf4;
+    }
+
+    .pagination-wrapper {
+        padding: 1rem 1.2rem;
+        border-top: 1px solid var(--green-border);
+        background: #ffffff;
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        margin: 0;
+    }
+    .pagination .page-item .page-link {
+        background: #fff;
+        border: 1px solid var(--green-border);
+        color: var(--green-dark);
+        font-family: var(--font);
+        font-size: 0.8rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 5px;
+        transition: 0.1s;
+    }
+    .pagination .page-item.active .page-link {
+        background: var(--green-main);
+        border-color: var(--green-main);
+        color: #fff;
+    }
+
+    /* Mobile styling */
+    @media (max-width: 768px) {
+        .page-header { flex-direction: column; align-items: stretch; }
+        .table-toolbar { flex-direction: column; align-items: stretch; }
+        .search-input { width: 100%; }
+        .stf-table thead { display: none; }
+        .stf-table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--green-border);
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 0.5rem;
+        }
+        .stf-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #e8f0e0;
+        }
+        .stf-table tbody td:last-child { border-bottom: none; }
+        .stf-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: var(--green-mid);
+            width: 40%;
+            flex-shrink: 0;
+        }
+        .action-btns { justify-content: flex-end; }
     }
 </style>
 @endpush
 
 @section('content')
-
 <div class="page-header">
     <div class="page-title">Staff</div>
     <button class="btn-add" onclick="openModal('addStaffModal')">+ Add Barn Staff</button>
@@ -145,16 +219,10 @@
         <input type="text" class="search-input" id="searchInput" placeholder="Search staff..." oninput="filterTable()">
     </div>
 
-    <div style="overflow-x:auto;">
+    <div class="table-wrapper">
         <table class="stf-table" id="stfTable">
             <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
+                <tr><th>ID</th><th>Name</th><th>Username</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 @forelse($staffs as $staff)
@@ -164,22 +232,23 @@
                     $username = $staff->user->username;
                     $isActive = $staff->staff_status === 'active';
                 @endphp
-                <tr data-name="{{ strtolower($fullName) }}" data-username="{{ strtolower($username) }}">
-                    <td><span class="stf-id-tag">{{ $stfId }}</span></td>
-                    <td><strong>{{ $fullName }}</strong></td>
-                    <td>{{ $username }}</td>
-                    <td>
+                <tr data-staff-id="{{ $staff->id }}"
+                    data-name="{{ strtolower($fullName) }}"
+                    data-username="{{ strtolower($username) }}">
+                    <td data-label="ID"><span class="stf-id-tag">{{ $stfId }}</span></td>
+                    <td data-label="Name"><strong>{{ $fullName }}</strong></td>
+                    <td data-label="Username">{{ $username }}</td>
+                    <td data-label="Status">
                         <span class="badge-{{ $isActive ? 'active' : 'inactive' }}">
                             {{ ucfirst($staff->staff_status) }}
                         </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                         <div class="action-btns">
-                            <button class="btn-action btn-view" title="View" onclick="openViewStaffModal({{ $staff->id }})">👁</button>
+                            {{-- VIEW BUTTON REMOVED --}}
                             <button class="btn-action btn-edit" title="Edit" onclick="openEditStaffModal({{ $staff->id }})">✎</button>
-                            
                             <button class="btn-action" 
-                                    title="{{ $isActive ? 'Deactivate Staff' : 'Reactivate Staff' }}"
+                                    title="{{ $isActive ? 'Deactivate' : 'Reactivate' }}"
                                     style="background: {{ $isActive ? '#c0392b' : '#28a745' }}; color:white;"
                                     onclick="toggleStaffStatus({{ $staff->id }})">
                                 {{ $isActive ? '🗑️' : '↺' }}
@@ -195,7 +264,15 @@
             </tbody>
         </table>
     </div>
+
+    @if(method_exists($staffs, 'links'))
+        <div class="pagination-wrapper">
+            {{ $staffs->withQueryString()->links('pagination::bootstrap-4') }}
+        </div>
+    @endif
 </div>
+
+@endsection
 
 @include('barn_owner_staffs.modals.add_staff')
 @include('barn_owner_staffs.modals.edit_staff')
@@ -204,14 +281,10 @@
 
 <div class="fb-toast" id="fbToast"></div>
 
-<script>
-    const staffsData = {!! json_encode($staffsData ?? []) !!};
-</script>
-
-@endsection
-
 @push('scripts')
 <script>
+    const staffsData = {!! json_encode($staffsData ?? []) !!};
+
     function openModal(id)  { document.getElementById(id).classList.add('show'); }
     function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
@@ -248,36 +321,44 @@
         openModal('editStaffModal');
     }
 
-    // Toggle Staff Status - Same pattern as toggleSupplyStatus
     function toggleStaffStatus(id) {
         const staff = staffsData.find(s => s.id === id);
         if (!staff) return;
-
         const isActive = staff.staff_status === 'active';
-        
         const title = isActive ? 'Deactivate Staff' : 'Reactivate Staff';
         const message = isActive 
-            ? `You are about to deactivate <strong>${staff.full_name}</strong>.<br>This staff member will be marked as inactive.`
-            : `You are about to reactivate <strong>${staff.full_name}</strong>.`;
-
+            ? `Deactivate <strong>${staff.full_name}</strong>? This staff will be marked as inactive.`
+            : `Reactivate <strong>${staff.full_name}</strong>?`;
         document.getElementById('deleteStfTitle').textContent = title;
         document.getElementById('deleteStfMessage').innerHTML = message;
         document.getElementById('deleteStaffSubmitBtn').textContent = isActive ? 'Yes, Deactivate' : 'Yes, Reactivate';
-
-        const form = document.getElementById('deleteStaffForm');
-        form.action = staff.delete_url;
-
+        document.getElementById('deleteStaffForm').action = staff.delete_url;
         openModal('deleteStaffModal');
     }
 
     function filterTable() {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        document.querySelectorAll('#stfTable tbody tr:not(.empty-row)').forEach(row => {
+        const rows = document.querySelectorAll('#stfTable tbody tr:not(.empty-row)');
+        rows.forEach(row => {
             const name = row.dataset.name || '';
             const user = row.dataset.username || '';
             row.style.display = (!q || name.includes(q) || user.includes(q)) ? '' : 'none';
         });
     }
+
+    // Double‑click row → view modal; single‑click → highlight
+    document.querySelectorAll('#stfTable tbody tr').forEach(row => {
+        row.addEventListener('dblclick', function(e) {
+            if (e.target.closest('.btn-action')) return;
+            const staffId = this.dataset.staffId;
+            if (staffId) openViewStaffModal(parseInt(staffId));
+        });
+        row.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-action')) return;
+            this.classList.add('row-highlight');
+            setTimeout(() => this.classList.remove('row-highlight'), 300);
+        });
+    });
 
     @if($errors->any() && old('_token'))
         openModal('addStaffModal');

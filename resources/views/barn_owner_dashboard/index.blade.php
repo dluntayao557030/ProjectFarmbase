@@ -6,7 +6,9 @@
     Welcome back to&nbsp<span class="barn-name-highlight">{{ $currentBarn->barn_name ?? ($currentUser?->full_name . "'s Barn") }}</span>.
     Here's what's happening in your barn today. 🌾
 @endsection
-
+@section('hero-text-mobile')
+    Welcome back, {{ $currentUser?->first_name ?? 'Barn Owner' }}! 🌾
+@endsection
 @push('styles')
 <style>
     .kpi-row {
@@ -22,13 +24,12 @@
         padding: 1.4rem 1.5rem;
         display: flex;
         align-items: center;
-        justify-content: space-between;   /* icon+label left, number right */
+        justify-content: space-between;
         gap: 1rem;
         box-shadow: 0 4px 16px rgba(90, 60, 0, 0.25);
         border: 1px solid rgba(200, 150, 10, 0.3);
         position: relative;
         overflow: hidden;
-        /* ── Clickable ── */
         cursor: pointer;
         transition: transform 0.15s, box-shadow 0.15s;
         user-select: none;
@@ -41,7 +42,6 @@
 
     .kpi-card:active { transform: translateY(-1px); }
 
-    /* Tooltip hint */
     .kpi-card::after {
         content: 'Click to view details';
         position: absolute;
@@ -93,7 +93,7 @@
         display: grid;
         grid-template-columns: 1fr 1.35fr;
         gap: 1.25rem;
-        height: calc(100vh - 370px); 
+        min-height: 450px; /* fallback */
     }
 
     .chart-card, .alert-card {
@@ -118,15 +118,20 @@
     .chart-container {
         flex: 1;
         position: relative;
-        min-height: 320px; 
+        min-height: 320px;
+    }
+
+    /* Table wrapper for horizontal scroll if needed */
+    .table-wrapper {
+        overflow-x: auto;
+        flex: 1;
     }
 
     .supply-alert-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.82rem;
-        flex: 1;
-        table-layout: fixed;       
+        table-layout: auto;
     }
 
     .supply-alert-table thead th {
@@ -137,19 +142,13 @@
         text-transform: uppercase;
         font-size: 0.76rem;
         text-align: left;
-        width: 20%;                
-        overflow: hidden;
-        text-overflow: ellipsis;
         white-space: nowrap;
     }
 
     .supply-alert-table tbody td {
         padding: 0.7rem 0.8rem;
         border-bottom: 1px solid #e8f0e0;
-        vertical-align: top;       
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        vertical-align: top;
     }
 
     .supply-alert-table tbody tr:last-child td {
@@ -188,8 +187,7 @@
     }
 
     /* ══════════════════════════════════════════════
-       KPI DETAIL MODALS
-       Design copied from Transaction History modal
+       KPI DETAIL MODALS (unchanged)
     ══════════════════════════════════════════════ */
     .kpi-modal-backdrop {
         display: none;
@@ -343,6 +341,104 @@
     }
 
     .kpi-close-btn:hover { background: var(--green-pale); }
+
+    /* ========== MOBILE RESPONSIVENESS ========== */
+    @media (max-width: 992px) {
+        .bottom-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .chart-container {
+            min-height: 280px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .kpi-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .kpi-card {
+            padding: 1rem 1.2rem;
+        }
+        .kpi-icon {
+            width: 44px;
+            height: 44px;
+        }
+        .kpi-value {
+            font-size: 2.2rem;
+        }
+        .kpi-label {
+            font-size: 0.7rem;
+        }
+        .kpi-card::after {
+            font-size: 0.55rem;
+            bottom: 0.3rem;
+            right: 0.5rem;
+        }
+
+        /* Table stacking */
+        .table-wrapper {
+            overflow-x: hidden;
+        }
+        .supply-alert-table thead {
+            display: none;
+        }
+        .supply-alert-table tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid var(--green-border);
+            border-radius: 10px;
+            background: #fff;
+            padding: 0.5rem;
+        }
+        .supply-alert-table td {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #e8f0e0;
+            align-items: center;
+        }
+        .supply-alert-table td:last-child {
+            border-bottom: none;
+        }
+        .supply-alert-table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: var(--green-mid);
+            width: 45%;
+            flex-shrink: 0;
+        }
+        /* Right align number columns */
+        .supply-alert-table td:nth-child(4),
+        .supply-alert-table td:nth-child(5) {
+            text-align: left;
+        }
+        .supply-alert-table td:nth-child(4)::before,
+        .supply-alert-table td:nth-child(5)::before {
+            text-align: left;
+        }
+
+        .chart-container {
+            min-height: 240px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .bottom-row {
+            gap: 0.8rem;
+        }
+        .chart-card, .alert-card {
+            padding: 1rem;
+        }
+        .kpi-icon {
+            width: 38px;
+            height: 38px;
+        }
+        .kpi-value {
+            font-size: 1.8rem;
+        }
+    }
 </style>
 @endpush
 
@@ -397,36 +493,38 @@
         </div>
 
         @if($lowStockSupplies->count() > 0)
-            <table class="supply-alert-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Supply</th>
-                        <th>Category</th>
-                        <th>Stock</th>
-                        <th>Reorder Level</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($lowStockSupplies as $supply)
-                    <tr>
-                        <td>
-                            <a href="{{ route('inventory.show', $supply->id) }}" class="supply-id text-decoration-none">
-                                {{ strtoupper(substr($supply->category->category_name ?? 'XX', 0, 3)) }}{{ str_pad($supply->id, 4, '0', STR_PAD_LEFT) }}
-                            </a>
-                        </td>
-                        <td>{{ $supply->supply_name }}</td>
-                        <td>{{ $supply->category->category_name ?? '—' }}</td>
-                        <td>
-                            <span class="stock-value {{ $supply->stock > 0 ? 'ok' : '' }}">
-                                {{ $supply->stock }}
-                            </span>
-                        </td>
-                        <td><span class="reorder-value">{{ $supply->reorder_level }}</span></td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="supply-alert-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Supply</th>
+                            <th>Category</th>
+                            <th>Stock</th>
+                            <th>Reorder Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($lowStockSupplies as $supply)
+                        <tr>
+                            <td data-label="ID">
+                                <a href="{{ route('inventory.show', $supply->id) }}" class="supply-id text-decoration-none">
+                                    {{ strtoupper(substr($supply->category->category_name ?? 'XX', 0, 3)) }}{{ str_pad($supply->id, 4, '0', STR_PAD_LEFT) }}
+                                </a>
+                            </td>
+                            <td data-label="Supply">{{ $supply->supply_name }}</td>
+                            <td data-label="Category">{{ $supply->category->category_name ?? '—' }}</td>
+                            <td data-label="Stock">
+                                <span class="stock-value">{{ $supply->stock }}</span>
+                            </td>
+                            <td data-label="Reorder Level">
+                                <span class="reorder-value">{{ $supply->reorder_level }}</span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @else
             <div class="empty-alert">
                 ✅ All supplies are above reorder levels.
@@ -437,26 +535,17 @@
 
 @endsection
 
-{{-- ══════════════════════════════════════════════
-     KPI DETAIL MODAL (shared, dynamically populated)
-     Design follows Transaction History modal style
-══════════════════════════════════════════════ --}}
+{{-- KPI MODAL (unchanged) --}}
 <div class="kpi-modal-backdrop" id="kpiModal" onclick="handleKpiBackdropClick(event)">
     <div class="kpi-modal">
-
         <div class="kpi-modal-header">
             <span id="kpiModalTitle">Details</span>
             <span class="kpi-modal-count" id="kpiModalCount"></span>
         </div>
-
-        <div class="kpi-modal-list" id="kpiModalList">
-            {{-- Populated by JS --}}
-        </div>
-
+        <div class="kpi-modal-list" id="kpiModalList"></div>
         <div class="kpi-modal-footer">
             <button class="kpi-close-btn" onclick="closeKpiModal()">Close</button>
         </div>
-
     </div>
 </div>
 
@@ -464,8 +553,7 @@
 <script>
     @if($categoryData->count() > 0)
     const ctx = document.getElementById('categoryChart').getContext('2d');
-
-    new Chart(ctx, {
+    let categoryChart = new Chart(ctx, {
         type: 'pie',
         data: {
             labels: @json($categoryData->pluck('category_name')),
@@ -482,7 +570,7 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: window.innerWidth <= 768 ? 'bottom' : 'right',
                     labels: {
                         font: { family: 'Inconsolata', size: 12, weight: '600' },
                         color: '#1a2e10',
@@ -493,15 +581,18 @@
             }
         }
     });
+
+    // Update legend position on window resize
+    function adjustChartLegend() {
+        if (categoryChart) {
+            const isMobile = window.innerWidth <= 768;
+            categoryChart.options.plugins.legend.position = isMobile ? 'bottom' : 'right';
+            categoryChart.update();
+        }
+    }
+    window.addEventListener('resize', adjustChartLegend);
     @endif
-</script>
 
-<script>
-    /* ══════════════════════════════════════════════
-       KPI MODAL — fetch + render
-    ══════════════════════════════════════════════ */
-
-    // Route map built from Blade so no hardcoding in JS
     const kpiRoutes = {
         'inventory': '{{ route("dashboard.kpi.inventory") }}',
         'stock-in':  '{{ route("dashboard.kpi.stockIn") }}',
@@ -512,9 +603,7 @@
         const modal = document.getElementById('kpiModal');
         document.getElementById('kpiModalTitle').textContent = icon + ' ' + title;
         document.getElementById('kpiModalCount').textContent = '';
-        document.getElementById('kpiModalList').innerHTML =
-            `<div class="kpi-empty">⏳ Loading...</div>`;
-
+        document.getElementById('kpiModalList').innerHTML = `<div class="kpi-empty">⏳ Loading...</div>`;
         modal.classList.add('show');
 
         fetch(kpiRoutes[type], {
@@ -523,15 +612,13 @@
         .then(r => { if (!r.ok) throw new Error(); return r.json(); })
         .then(data => renderKpiModal(data, type))
         .catch(() => {
-            document.getElementById('kpiModalList').innerHTML =
-                `<div class="kpi-empty">❌ Failed to load data.<br>Please try again.</div>`;
+            document.getElementById('kpiModalList').innerHTML = `<div class="kpi-empty">❌ Failed to load data.<br>Please try again.</div>`;
         });
     }
 
     function renderKpiModal(items, type) {
         const list = document.getElementById('kpiModalList');
-        document.getElementById('kpiModalCount').textContent =
-            items.length + ' record' + (items.length !== 1 ? 's' : '');
+        document.getElementById('kpiModalCount').textContent = items.length + ' record' + (items.length !== 1 ? 's' : '');
 
         if (!items || items.length === 0) {
             const messages = {
@@ -544,7 +631,6 @@
         }
 
         list.innerHTML = items.map(item => {
-            // Determine badge
             let badgeClass, badgeText;
             if (item.status === 'stock_in') {
                 badgeClass = 'kpi-badge-in';  badgeText = 'STOCK IN';
@@ -558,7 +644,6 @@
                 badgeClass = 'kpi-badge-empty'; badgeText = 'OUT OF STOCK';
             }
 
-            // Value color
             const valueColor = item.status === 'stock_in'  ? '#2e7d32'
                              : item.status === 'stock_out' ? '#c62828'
                              : item.status === 'Low Stock' ? '#c0392b'
@@ -569,18 +654,12 @@
                     <div class="kpi-item-info">
                         <div class="kpi-item-name">${item.name}</div>
                         <div class="kpi-item-detail">${item.detail}</div>
-                        ${item.unit_cost != null
-                            ? `<div class="kpi-item-detail">Unit Cost: <strong>₱${item.unit_cost}</strong></div>`
-                            : ''}
-                        ${item.sub && item.sub !== 'No remarks'
-                            ? `<div class="kpi-item-detail" style="font-style:italic;">${item.sub}</div>`
-                            : ''}
+                        ${item.unit_cost != null ? `<div class="kpi-item-detail">Unit Cost: <strong>₱${item.unit_cost}</strong></div>` : ''}
+                        ${item.sub && item.sub !== 'No remarks' ? `<div class="kpi-item-detail" style="font-style:italic;">${item.sub}</div>` : ''}
                     </div>
                     <div class="kpi-item-right">
                         <span class="kpi-badge ${badgeClass}">${badgeText}</span>
-                        <span class="kpi-item-value" style="color:${valueColor};">
-                            ${item.value}
-                        </span>
+                        <span class="kpi-item-value" style="color:${valueColor};">${item.value}</span>
                     </div>
                 </div>`;
         }).join('');
