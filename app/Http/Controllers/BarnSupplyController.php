@@ -45,7 +45,7 @@ class BarnSupplyController extends Controller
                 'reorder_level'   => $s->reorder_level,
                 'status_label'    => $statusLabel,
                 'supply_status'   => $s->supply_status,
-                'img_url'         => $s->supply_img_path, // Now Cloudinary URL
+                'img_url'         => $s->supply_img_path, 
                 'edit_url'        => route('inventory.update', $s->id),
                 'delete_url'      => route('inventory.destroy', $s->id),
             ];
@@ -66,17 +66,27 @@ class BarnSupplyController extends Controller
         ]);
 
         $imgUrl = null;
+
         if ($request->hasFile('supply_image')) {
-            $imgUrl = Cloudinary::upload(
-                $request->file('supply_image')->getRealPath()
-            )->getSecurePath();
+            try {
+                $uploadResult = Cloudinary::upload(
+                    $request->file('supply_image')->getRealPath(),
+                    ['folder' => 'barn_supplies']   // Optional: organizes your images
+                );
+                $imgUrl = $uploadResult->getSecurePath();
+            } catch (\Exception $e) {
+                \Log::error('Cloudinary Upload Error (Store): ' . $e->getMessage());
+                return redirect()->back()
+                                 ->withInput()
+                                 ->with('error', 'Image upload failed. Please try again later.');
+            }
         }
 
         BarnSupply::create([
             'barn_id'         => $barn->id,
             'category_id'     => $request->category_id,
             'supply_name'     => $request->supply_name,
-            'supply_img_path' => $imgUrl,           // Cloudinary URL
+            'supply_img_path' => $imgUrl,
             'stock'           => 0,
             'reorder_level'   => $request->reorder_level,
             'supply_status'   => 'active',
@@ -101,17 +111,26 @@ class BarnSupplyController extends Controller
         $imgUrl = $inventory->supply_img_path;
 
         if ($request->hasFile('supply_image')) {
-            // Optional: You could delete the old image from Cloudinary here if you store public_id
-            // For now we just overwrite with new URL as per instructions
-            $imgUrl = Cloudinary::upload(
-                $request->file('supply_image')->getRealPath()
-            )->getSecurePath();
+            try {
+                // Optional: Delete old image from Cloudinary (advanced)
+                // For now we just upload new one
+                $uploadResult = Cloudinary::upload(
+                    $request->file('supply_image')->getRealPath(),
+                    ['folder' => 'barn_supplies']
+                );
+                $imgUrl = $uploadResult->getSecurePath();
+            } catch (\Exception $e) {
+                \Log::error('Cloudinary Upload Error (Update): ' . $e->getMessage());
+                return redirect()->back()
+                                 ->withInput()
+                                 ->with('error', 'Image upload failed. Please try again later.');
+            }
         }
 
         $inventory->update([
             'category_id'     => $request->category_id,
             'supply_name'     => $request->supply_name,
-            'supply_img_path' => $imgUrl,           // Cloudinary URL
+            'supply_img_path' => $imgUrl,
             'reorder_level'   => $request->reorder_level,
         ]);
 
@@ -119,9 +138,6 @@ class BarnSupplyController extends Controller
                          ->with('success', "Supply \"{$inventory->supply_name}\" updated successfully.");
     }
 
-    /**
-     * Toggle between Active and Inactive
-     */
     public function destroy(BarnSupply $inventory)
     {
         $barn = $this->getOwnerBarn();
