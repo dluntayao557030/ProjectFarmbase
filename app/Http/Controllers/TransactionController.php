@@ -9,6 +9,7 @@ use App\Models\InventoryTransaction;
 use App\Models\BarnSupplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class TransactionController extends Controller
 {
@@ -23,34 +24,34 @@ class TransactionController extends Controller
 
     public function index()
     {
-    $barn = $this->getStaffBarn();
+        $barn = $this->getStaffBarn();
 
-    $supplies = BarnSupply::with([
-            'category',
-            'transactions' => fn($q) => $q->with('user')->latest()->limit(1)
-        ])
-        ->where('barn_id', $barn->id)
-        ->where('supply_status', 'active')
-        ->orderBy('supply_name')
-        ->get();
+        $supplies = BarnSupply::with([
+                'category',
+                'transactions' => fn($q) => $q->with('user')->latest()->limit(1)
+            ])
+            ->where('barn_id', $barn->id)
+            ->where('supply_status', 'active')
+            ->orderBy('supply_name')
+            ->get();
 
-    $suppliers = BarnSupplier::where('barn_id', $barn->id)
-                             ->where('supplier_status', 'active')
-                             ->orderBy('supplier_name')
-                             ->get();
+        $suppliers = BarnSupplier::where('barn_id', $barn->id)
+                                 ->where('supplier_status', 'active')
+                                 ->orderBy('supplier_name')
+                                 ->get();
 
-    $suppliersByCategory = $suppliers->groupBy('category_id')->map(function($group) {
-        return $group->map(function($s) {
-            return [
-                'id'             => $s->id,
-                'supplier_name'  => $s->supplier_name,
-                'contact_number' => $s->contact_number,
-            ];
+        $suppliersByCategory = $suppliers->groupBy('category_id')->map(function($group) {
+            return $group->map(function($s) {
+                return [
+                    'id'             => $s->id,
+                    'supplier_name'  => $s->supplier_name,
+                    'contact_number' => $s->contact_number,
+                ];
+            });
         });
-    });
 
-    return view('barn_staff_transaction.index', compact('barn', 'supplies', 'suppliersByCategory'));
-}
+        return view('barn_staff_transaction.index', compact('barn', 'supplies', 'suppliersByCategory'));
+    }
  
     public function stockIn(Request $request)
     {
@@ -143,28 +144,28 @@ class TransactionController extends Controller
     }
 
     public function historyData()
-{
-    $staff = BarnStaff::where('user_id', Auth::id())
-                      ->where('staff_status', 'active')
-                      ->firstOrFail();
+    {
+        $staff = BarnStaff::where('user_id', Auth::id())
+                          ->where('staff_status', 'active')
+                          ->firstOrFail();
 
-    $transactions = InventoryTransaction::with(['supply', 'supplier'])
-        ->where('barn_id', $staff->barn_id)
-        ->where('user_id', Auth::id())
-        ->orderByDesc('created_at')
-        ->get()
-        ->map(function ($t) {
-            return [
-                'supply_name'      => $t->supply->supply_name ?? '—',
-                'supplier_name'    => $t->supplier ? $t->supplier->supplier_name : null,
-                'transaction_type' => $t->transaction_type,
-                'quantity'         => $t->quantity,
-                'unit_cost'        => $t->unit_cost,
-                'remarks'          => $t->remarks ?? 'No remarks',
-                'created_at'       => $t->created_at->setTimezone('Asia/Manila')->format('M j, Y g:i A'),
-            ];
-        });
+        $transactions = InventoryTransaction::with(['supply', 'supplier'])
+            ->where('barn_id', $staff->barn_id)
+            ->where('user_id', Auth::id())
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'supply_name'      => $t->supply->supply_name ?? '—',
+                    'supplier_name'    => $t->supplier ? $t->supplier->supplier_name : null,
+                    'transaction_type' => $t->transaction_type,
+                    'quantity'         => $t->quantity,
+                    'unit_cost'        => $t->unit_cost,
+                    'remarks'          => $t->remarks ?? 'No remarks',
+                    'created_at'       => $t->created_at->setTimezone('Asia/Manila')->format('M j, Y g:i A'),
+                ];
+            });
 
-    return response()->json($transactions);
-}
+        return response()->json($transactions);
+    }
 }
