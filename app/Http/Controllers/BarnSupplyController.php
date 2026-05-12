@@ -7,7 +7,7 @@ use App\Models\BarnSupply;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class BarnSupplyController extends Controller
 {
@@ -45,7 +45,7 @@ class BarnSupplyController extends Controller
                 'reorder_level'   => $s->reorder_level,
                 'status_label'    => $statusLabel,
                 'supply_status'   => $s->supply_status,
-                'img_url'         => $s->supply_img_path ? asset('storage/' . $s->supply_img_path) : null,
+                'img_url'         => $s->supply_img_path, // Now Cloudinary URL
                 'edit_url'        => route('inventory.update', $s->id),
                 'delete_url'      => route('inventory.destroy', $s->id),
             ];
@@ -65,16 +65,18 @@ class BarnSupplyController extends Controller
             'supply_image'  => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
-        $imgPath = null;
+        $imgUrl = null;
         if ($request->hasFile('supply_image')) {
-            $imgPath = $request->file('supply_image')->store('supplies', 'public');
+            $imgUrl = Cloudinary::upload(
+                $request->file('supply_image')->getRealPath()
+            )->getSecurePath();
         }
 
         BarnSupply::create([
             'barn_id'         => $barn->id,
             'category_id'     => $request->category_id,
             'supply_name'     => $request->supply_name,
-            'supply_img_path' => $imgPath,
+            'supply_img_path' => $imgUrl,           // Cloudinary URL
             'stock'           => 0,
             'reorder_level'   => $request->reorder_level,
             'supply_status'   => 'active',
@@ -96,19 +98,20 @@ class BarnSupplyController extends Controller
             'supply_image'  => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
-        $imgPath = $inventory->supply_img_path;
+        $imgUrl = $inventory->supply_img_path;
 
         if ($request->hasFile('supply_image')) {
-            if ($imgPath && Storage::disk('public')->exists($imgPath)) {
-                Storage::disk('public')->delete($imgPath);
-            }
-            $imgPath = $request->file('supply_image')->store('supplies', 'public');
+            // Optional: You could delete the old image from Cloudinary here if you store public_id
+            // For now we just overwrite with new URL as per instructions
+            $imgUrl = Cloudinary::upload(
+                $request->file('supply_image')->getRealPath()
+            )->getSecurePath();
         }
 
         $inventory->update([
             'category_id'     => $request->category_id,
             'supply_name'     => $request->supply_name,
-            'supply_img_path' => $imgPath,
+            'supply_img_path' => $imgUrl,           // Cloudinary URL
             'reorder_level'   => $request->reorder_level,
         ]);
 
@@ -117,7 +120,7 @@ class BarnSupplyController extends Controller
     }
 
     /**
-     * Toggle between Active and Inactive (using destroy route)
+     * Toggle between Active and Inactive
      */
     public function destroy(BarnSupply $inventory)
     {

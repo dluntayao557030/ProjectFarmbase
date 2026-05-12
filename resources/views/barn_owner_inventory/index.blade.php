@@ -379,7 +379,7 @@
                     class="{{ !$isActive ? 'table-secondary opacity-75' : '' }}">
                     <td data-label="Image">
                         @if($supply->supply_img_path)
-                            <img src="{{ asset('storage/' . $supply->supply_img_path) }}" class="supply-thumb" alt="{{ $supply->supply_name }}">
+                            <img src="{{ $supply->supply_img_path }}" class="supply-thumb" alt="{{ $supply->supply_name }}">
                         @else
                             <div class="supply-thumb-placeholder">📦</div>
                         @endif
