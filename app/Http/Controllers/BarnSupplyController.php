@@ -56,89 +56,111 @@ class BarnSupplyController extends Controller
 
   public function store(Request $request)
 {
-    try {
-        $barn = $this->getOwnerBarn();
+    $barn = $this->getOwnerBarn();
 
-        $request->validate([
-            'supply_name'   => 'required|string|max:200',
-            'category_id'   => 'required|exists:categories,id',
-            'reorder_level' => 'required|integer|min:0',
-            'supply_image'  => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-        ]);
+    $request->validate([
+        'supply_name'   => 'required|string|max:200',
+        'category_id'   => 'required|exists:categories,id',
+        'reorder_level' => 'required|integer|min:0',
+        'supply_image'  => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+    ]);
 
-        $imgUrl = null;
+    $imgUrl = null;
 
-        if ($request->hasFile('supply_image')) {
-            $uploadResult = Cloudinary::upload(
-                $request->file('supply_image')->getRealPath(),
-                ['folder' => 'barn_supplies']
-            );
+    if ($request->hasFile('supply_image')) {
+        try {
+            // Check if Cloudinary is properly configured
+            if (!config('cloudinary.cloud_name')) {
+                throw new \Exception('Cloudinary is not configured properly.');
+            }
+
+            $file = $request->file('supply_image');
+
+            $uploadResult = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'barn_supplies',
+                'use_filename' => true,
+                'unique_filename' => true,
+            ]);
+
             $imgUrl = $uploadResult->getSecurePath();
+
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+            
+            return redirect()->back()
+                             ->withInput()
+                             ->with('error', 'Image upload failed: ' . $e->getMessage());
         }
-
-        BarnSupply::create([
-            'barn_id'         => $barn->id,
-            'category_id'     => $request->category_id,
-            'supply_name'     => $request->supply_name,
-            'supply_img_path' => $imgUrl,
-            'stock'           => 0,
-            'reorder_level'   => $request->reorder_level,
-            'supply_status'   => 'active',
-        ]);
-
-        return redirect()->route('inventory.index')
-                         ->with('success', "Supply added successfully.");
-
-    } catch (\Exception $e) {
-        \Log::error('Store Supply Error: ' . $e->getMessage());
-        return redirect()->back()
-                         ->withInput()
-                         ->with('error', 'Something went wrong: ' . $e->getMessage());
     }
+
+    // Create supply (this part works as you confirmed)
+    BarnSupply::create([
+        'barn_id'         => $barn->id,
+        'category_id'     => $request->category_id,
+        'supply_name'     => $request->supply_name,
+        'supply_img_path' => $imgUrl,
+        'stock'           => 0,
+        'reorder_level'   => $request->reorder_level,
+        'supply_status'   => 'active',
+    ]);
+
+    return redirect()->route('inventory.index')
+                     ->with('success', "Supply \"{$request->supply_name}\" added successfully.");
 }
 
-    public function update(Request $request, BarnSupply $inventory)
-    {
-        $barn = $this->getOwnerBarn();
-        abort_if($inventory->barn_id !== $barn->id, 403);
+    public function store(Request $request)
+{
+    $barn = $this->getOwnerBarn();
 
-        $request->validate([
-            'supply_name'   => 'required|string|max:200',
-            'category_id'   => 'required|exists:categories,id',
-            'reorder_level' => 'required|integer|min:0',
-            'supply_image'  => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-        ]);
+    $request->validate([
+        'supply_name'   => 'required|string|max:200',
+        'category_id'   => 'required|exists:categories,id',
+        'reorder_level' => 'required|integer|min:0',
+        'supply_image'  => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+    ]);
 
-        $imgUrl = $inventory->supply_img_path;
+    $imgUrl = null;
 
-        if ($request->hasFile('supply_image')) {
-            try {
-                // Optional: Delete old image from Cloudinary (advanced)
-                // For now we just upload new one
-                $uploadResult = Cloudinary::upload(
-                    $request->file('supply_image')->getRealPath(),
-                    ['folder' => 'barn_supplies']
-                );
-                $imgUrl = $uploadResult->getSecurePath();
-            } catch (\Exception $e) {
-                \Log::error('Cloudinary Upload Error (Update): ' . $e->getMessage());
-                return redirect()->back()
-                                 ->withInput()
-                                 ->with('error', 'Image upload failed. Please try again later.');
+    if ($request->hasFile('supply_image')) {
+        try {
+            // Check if Cloudinary is properly configured
+            if (!config('cloudinary.cloud_name')) {
+                throw new \Exception('Cloudinary is not configured properly.');
             }
+
+            $file = $request->file('supply_image');
+
+            $uploadResult = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'barn_supplies',
+                'use_filename' => true,
+                'unique_filename' => true,
+            ]);
+
+            $imgUrl = $uploadResult->getSecurePath();
+
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary Upload Failed: ' . $e->getMessage());
+            
+            return redirect()->back()
+                             ->withInput()
+                             ->with('error', 'Image upload failed: ' . $e->getMessage());
         }
-
-        $inventory->update([
-            'category_id'     => $request->category_id,
-            'supply_name'     => $request->supply_name,
-            'supply_img_path' => $imgUrl,
-            'reorder_level'   => $request->reorder_level,
-        ]);
-
-        return redirect()->route('inventory.index')
-                         ->with('success', "Supply \"{$inventory->supply_name}\" updated successfully.");
     }
 
+    // Create supply (this part works as you confirmed)
+    BarnSupply::create([
+        'barn_id'         => $barn->id,
+        'category_id'     => $request->category_id,
+        'supply_name'     => $request->supply_name,
+        'supply_img_path' => $imgUrl,
+        'stock'           => 0,
+        'reorder_level'   => $request->reorder_level,
+        'supply_status'   => 'active',
+    ]);
+
+    return redirect()->route('inventory.index')
+                     ->with('success', "Supply \"{$request->supply_name}\" added successfully.");
+}
     public function destroy(BarnSupply $inventory)
     {
         $barn = $this->getOwnerBarn();
