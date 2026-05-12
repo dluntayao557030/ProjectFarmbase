@@ -54,8 +54,9 @@ class BarnSupplyController extends Controller
         return view('barn_owner_inventory.index', compact('barn', 'supplies', 'categories', 'suppliesData'));
     }
 
-    public function store(Request $request)
-    {
+  public function store(Request $request)
+{
+    try {
         $barn = $this->getOwnerBarn();
 
         $request->validate([
@@ -68,18 +69,11 @@ class BarnSupplyController extends Controller
         $imgUrl = null;
 
         if ($request->hasFile('supply_image')) {
-            try {
-                $uploadResult = Cloudinary::upload(
-                    $request->file('supply_image')->getRealPath(),
-                    ['folder' => 'barn_supplies']   // Optional: organizes your images
-                );
-                $imgUrl = $uploadResult->getSecurePath();
-            } catch (\Exception $e) {
-                \Log::error('Cloudinary Upload Error (Store): ' . $e->getMessage());
-                return redirect()->back()
-                                 ->withInput()
-                                 ->with('error', 'Image upload failed. Please try again later.');
-            }
+            $uploadResult = Cloudinary::upload(
+                $request->file('supply_image')->getRealPath(),
+                ['folder' => 'barn_supplies']
+            );
+            $imgUrl = $uploadResult->getSecurePath();
         }
 
         BarnSupply::create([
@@ -93,8 +87,15 @@ class BarnSupplyController extends Controller
         ]);
 
         return redirect()->route('inventory.index')
-                         ->with('success', "Supply \"{$request->supply_name}\" added successfully.");
+                         ->with('success', "Supply added successfully.");
+
+    } catch (\Exception $e) {
+        \Log::error('Store Supply Error: ' . $e->getMessage());
+        return redirect()->back()
+                         ->withInput()
+                         ->with('error', 'Something went wrong: ' . $e->getMessage());
     }
+}
 
     public function update(Request $request, BarnSupply $inventory)
     {
