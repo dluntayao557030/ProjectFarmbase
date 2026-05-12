@@ -71,17 +71,15 @@ class BarnSupplyController extends Controller
             try {
                 $result = Cloudinary::uploadApi()->upload(
                     $request->file('supply_image')->getRealPath(),
-                    [
-                        'folder' => 'barn_supplies',
-                    ]
+                    ['folder' => 'barn_supplies']
                 );
 
-                $imgUrl = $result['secure_url'];   // v3 returns array
+                $imgUrl = $result['secure_url'];
             } catch (\Exception $e) {
-                \Log::error('Cloudinary v3 Upload Error: ' . $e->getMessage());
+                \Log::error('Cloudinary Error: ' . $e->getMessage());
                 return redirect()->back()
                                  ->withInput()
-                                 ->with('error', 'Image upload failed: ' . $e->getMessage());
+                                 ->with('error', 'Upload failed: ' . $e->getMessage());
             }
         }
 
@@ -99,6 +97,7 @@ class BarnSupplyController extends Controller
                          ->with('success', "Supply \"{$request->supply_name}\" added successfully.");
     }
 
+    // Update method (same pattern)
     public function update(Request $request, BarnSupply $inventory)
     {
         $barn = $this->getOwnerBarn();
@@ -117,17 +116,13 @@ class BarnSupplyController extends Controller
             try {
                 $result = Cloudinary::uploadApi()->upload(
                     $request->file('supply_image')->getRealPath(),
-                    [
-                        'folder' => 'barn_supplies',
-                    ]
+                    ['folder' => 'barn_supplies']
                 );
-
                 $imgUrl = $result['secure_url'];
             } catch (\Exception $e) {
-                \Log::error('Cloudinary v3 Update Error: ' . $e->getMessage());
                 return redirect()->back()
                                  ->withInput()
-                                 ->with('error', 'Image upload failed: ' . $e->getMessage());
+                                 ->with('error', 'Upload failed: ' . $e->getMessage());
             }
         }
 
@@ -158,7 +153,6 @@ class BarnSupplyController extends Controller
                          ->with('success', "Supply \"{$name}\" has been {$action} successfully.");
     }
 
-    // Redirect unused methods
     public function show(BarnSupply $inventory) { return redirect()->route('inventory.index'); }
     public function create()                    { return redirect()->route('inventory.index'); }
     public function edit(BarnSupply $inventory) { return redirect()->route('inventory.index'); }
