@@ -150,35 +150,75 @@ class BarnSupplyController extends Controller
 
     // Helper method: upload to Cloudinary with retry and fallback
     private function uploadToCloudinaryWithRetry($file, $maxRetries = 3, $delaySeconds = 2)
-    {
-        $attempt = 0;
-        $lastException = null;
+{
+    $attempt = 0;
+    $lastException = null;
 
-        while ($attempt < $maxRetries) {
-            try {
-                // Try getRealPath() first, fallback to raw content
-                $fileToUpload = $file->getRealPath();
-                if (!$fileToUpload || !file_exists($fileToUpload)) {
-                    $fileToUpload = $file->get(); // raw file content
-                }
+    while ($attempt < $maxRetries) {
+        try {
+            // Get file content
+            $fileToUpload = $file->getRealPath();
+            if (!$fileToUpload || !file_exists($fileToUpload)) {
+                $fileToUpload = $file->get();
+            }
 
-                $result = Cloudinary::upload($fileToUpload, [
-                    'folder'        => 'barn_supplies',
-                    'resource_type' => 'image'
-                ]);
+            // Manually build Cloudinary upload request to see raw response
+            $cloudName = env('CLOUDINARY_CLOUD_NAME');
+            $apiKey    = env('CLOUDINARY_API_KEY');
+            $apiSecret = env('CLOUDINARY_API_SECRET');
 
-                return $result->getSecurePath();
-            } catch (\Exception $e) {
-                $lastException = $e;
-                $attempt++;
-                if ($attempt < $maxRetries) {
-                    sleep($delaySeconds);
-                }
+            // If credentials are missing, throw a clear error
+            if (empty($cloudName) || empty($apiKey) || empty($apiSecret)) {
+                throw new \Exception('Missing Cloudinary credentials. Check CLOUDINARY_CLOUD_NAME, API_KEY, API_SECRET in environment.');
+            }
+
+            $url = "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload";
+            $timestamp = time();
+            $signature = sha1("folder=barn_supplies&timestamp={$timestamp}{$apiSecret}");
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, [
+                'file'       => curl_file_create($fileToUpload),
+                'api_key'    => $apiKey,
+                'timestamp'  => $timestamp,
+                'signature'  => $signature,
+                'folder'     => 'barn_supplies',
+            ]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($curlError) {
+                throw new \Exception('cURL error: ' . $curlError);
+            }
+
+            if ($httpCode !== 200) {
+                throw new \Exception("Cloudinary API returned HTTP {$httpCode}. Response: " . substr($response, 0, 500));
+            }
+
+            $data = json_decode($response, true);
+            if (!isset($data['secure_url'])) {
+                throw new \Exception('Cloudinary response missing secure_url. Full response: ' . print_r($data, true));
+            }
+
+            return $data['secure_url'];
+
+        } catch (\Exception $e) {
+            $lastException = $e;
+            $attempt++;
+            if ($attempt < $maxRetries) {
+                sleep($delaySeconds);
             }
         }
-
-        throw new \Exception('Cloudinary upload failed after ' . $maxRetries . ' attempts: ' . $lastException->getMessage());
     }
+
+    throw new \Exception('Cloudinary upload failed after ' . $maxRetries . ' attempts: ' . $lastException->getMessage());
+}
 
     // Redirect unused methods
     public function show(BarnSupply $inventory) { return redirect()->route('inventory.index'); }
