@@ -7,6 +7,7 @@ use App\Models\BarnSupply;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class BarnSupplyController extends Controller
@@ -69,11 +70,14 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                $imgUrl = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
+                // DEBUG: Dump the upload result or error
+                $uploadResult = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
+                dd($uploadResult); // <-- This will show you the result on a blank page
+                $imgUrl = $uploadResult;
             } catch (\Exception $e) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Image upload failed: ' . $e->getMessage());
+                // Also log the error to laravel.log
+                Log::error('Cloudinary store error: ' . $e->getMessage());
+                dd('Upload failed: ' . $e->getMessage()); // <-- This will show the error
             }
         }
 
@@ -107,11 +111,13 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                $imgUrl = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
+                // DEBUG: Dump the upload result or error
+                $uploadResult = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
+                dd($uploadResult); // <-- This will show you the result on a blank page
+                $imgUrl = $uploadResult;
             } catch (\Exception $e) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Image upload failed: ' . $e->getMessage());
+                Log::error('Cloudinary update error: ' . $e->getMessage());
+                dd('Upload failed: ' . $e->getMessage()); // <-- This will show the error
             }
         }
 
