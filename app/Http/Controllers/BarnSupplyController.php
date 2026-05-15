@@ -8,7 +8,6 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class BarnSupplyController extends Controller
 {
@@ -156,22 +155,22 @@ class BarnSupplyController extends Controller
 
     while ($attempt < $maxRetries) {
         try {
-            // Get file content
+            // 1. Get the file content or path
             $fileToUpload = $file->getRealPath();
             if (!$fileToUpload || !file_exists($fileToUpload)) {
-                $fileToUpload = $file->get();
+                $fileToUpload = $file->get(); // Fallback to raw content
             }
 
-            // Manually build Cloudinary upload request to see raw response
+            // 2. Fetch Cloudinary credentials from environment
             $cloudName = env('CLOUDINARY_CLOUD_NAME');
             $apiKey    = env('CLOUDINARY_API_KEY');
             $apiSecret = env('CLOUDINARY_API_SECRET');
 
-            // If credentials are missing, throw a clear error
             if (empty($cloudName) || empty($apiKey) || empty($apiSecret)) {
-                throw new \Exception('Missing Cloudinary credentials. Check CLOUDINARY_CLOUD_NAME, API_KEY, API_SECRET in environment.');
+                throw new \Exception('Missing Cloudinary credentials. Check your Render environment variables.');
             }
 
+            // 3. Prepare the API request
             $url = "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload";
             $timestamp = time();
             $signature = sha1("folder=barn_supplies&timestamp={$timestamp}{$apiSecret}");
@@ -188,6 +187,8 @@ class BarnSupplyController extends Controller
             ]);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Add a timeout to prevent hanging
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
@@ -206,11 +207,15 @@ class BarnSupplyController extends Controller
                 throw new \Exception('Cloudinary response missing secure_url. Full response: ' . print_r($data, true));
             }
 
+            // Log success for monitoring
+            Log::info('Cloudinary upload successful', ['url' => $data['secure_url']]);
+
             return $data['secure_url'];
 
         } catch (\Exception $e) {
             $lastException = $e;
             $attempt++;
+            Log::warning("Cloudinary upload attempt {$attempt} failed", ['error' => $e->getMessage()]);
             if ($attempt < $maxRetries) {
                 sleep($delaySeconds);
             }
