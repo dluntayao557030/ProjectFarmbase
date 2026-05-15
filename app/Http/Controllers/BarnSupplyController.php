@@ -69,15 +69,11 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                $result = Cloudinary::uploadApi()->upload(
-                    $request->file('supply_image')->getRealPath(),
-                    ['folder' => 'barn_supplies']
-                );
-                $imgUrl = $result['secure_url'] ?? null;
+                $imgUrl = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
             } catch (\Exception $e) {
                 return redirect()->back()
-                                 ->withInput()
-                                 ->with('error', 'Image upload failed: ' . $e->getMessage());
+                    ->withInput()
+                    ->with('error', 'Image upload failed: ' . $e->getMessage());
             }
         }
 
@@ -92,7 +88,7 @@ class BarnSupplyController extends Controller
         ]);
 
         return redirect()->route('inventory.index')
-                         ->with('success', "Supply \"{$request->supply_name}\" added successfully.");
+            ->with('success', "Supply \"{$request->supply_name}\" added successfully.");
     }
 
     public function update(Request $request, BarnSupply $inventory)
@@ -111,15 +107,11 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                $result = Cloudinary::uploadApi()->upload(
-                    $request->file('supply_image')->getRealPath(),
-                    ['folder' => 'barn_supplies']
-                );
-                $imgUrl = $result['secure_url'] ?? null;
+                $imgUrl = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
             } catch (\Exception $e) {
                 return redirect()->back()
-                                 ->withInput()
-                                 ->with('error', 'Image upload failed: ' . $e->getMessage());
+                    ->withInput()
+                    ->with('error', 'Image upload failed: ' . $e->getMessage());
             }
         }
 
@@ -131,7 +123,7 @@ class BarnSupplyController extends Controller
         ]);
 
         return redirect()->route('inventory.index')
-                         ->with('success', "Supply \"{$inventory->supply_name}\" updated successfully.");
+            ->with('success', "Supply \"{$inventory->supply_name}\" updated successfully.");
     }
 
     public function destroy(BarnSupply $inventory)
@@ -147,7 +139,39 @@ class BarnSupplyController extends Controller
         $action = $newStatus === 'active' ? 'reactivated' : 'deactivated';
 
         return redirect()->route('inventory.index')
-                         ->with('success', "Supply \"{$name}\" has been {$action} successfully.");
+            ->with('success', "Supply \"{$name}\" has been {$action} successfully.");
+    }
+
+    // Helper method: upload to Cloudinary with retry and fallback
+    private function uploadToCloudinaryWithRetry($file, $maxRetries = 3, $delaySeconds = 2)
+    {
+        $attempt = 0;
+        $lastException = null;
+
+        while ($attempt < $maxRetries) {
+            try {
+                // Try getRealPath() first, fallback to raw content
+                $fileToUpload = $file->getRealPath();
+                if (!$fileToUpload || !file_exists($fileToUpload)) {
+                    $fileToUpload = $file->get(); // raw file content
+                }
+
+                $result = Cloudinary::upload($fileToUpload, [
+                    'folder'        => 'barn_supplies',
+                    'resource_type' => 'image'
+                ]);
+
+                return $result->getSecurePath();
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempt++;
+                if ($attempt < $maxRetries) {
+                    sleep($delaySeconds);
+                }
+            }
+        }
+
+        throw new \Exception('Cloudinary upload failed after ' . $maxRetries . ' attempts: ' . $lastException->getMessage());
     }
 
     // Redirect unused methods
