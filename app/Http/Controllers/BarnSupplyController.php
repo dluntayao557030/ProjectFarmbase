@@ -69,14 +69,11 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                // DEBUG: Dump the upload result or error
-                $uploadResult = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
-                dd($uploadResult); // <-- This will show you the result on a blank page
-                $imgUrl = $uploadResult;
+                $imgUrl = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
             } catch (\Exception $e) {
-                // Also log the error to laravel.log
-                Log::error('Cloudinary store error: ' . $e->getMessage());
-                dd('Upload failed: ' . $e->getMessage()); // <-- This will show the error
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Image upload failed: ' . $e->getMessage());
             }
         }
 
@@ -110,13 +107,11 @@ class BarnSupplyController extends Controller
 
         if ($request->hasFile('supply_image')) {
             try {
-                // DEBUG: Dump the upload result or error
-                $uploadResult = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
-                dd($uploadResult); // <-- This will show you the result on a blank page
-                $imgUrl = $uploadResult;
+                $imgUrl = $this->uploadToCloudinaryWithRetry($request->file('supply_image'));
             } catch (\Exception $e) {
-                Log::error('Cloudinary update error: ' . $e->getMessage());
-                dd('Upload failed: ' . $e->getMessage()); // <-- This will show the error
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Image upload failed: ' . $e->getMessage());
             }
         }
 
@@ -147,85 +142,76 @@ class BarnSupplyController extends Controller
             ->with('success', "Supply \"{$name}\" has been {$action} successfully.");
     }
 
-    // Helper method: upload to Cloudinary with retry and fallback
     private function uploadToCloudinaryWithRetry($file, $maxRetries = 3, $delaySeconds = 2)
-{
-    $attempt = 0;
-    $lastException = null;
+    {
+        $attempt = 0;
+        $lastException = null;
 
-    while ($attempt < $maxRetries) {
-        try {
-            // 1. Get the file content or path
-            $fileToUpload = $file->getRealPath();
-            if (!$fileToUpload || !file_exists($fileToUpload)) {
-                $fileToUpload = $file->get(); // Fallback to raw content
-            }
+        while ($attempt < $maxRetries) {
+            try {
+                $fileToUpload = $file->getRealPath();
+                if (!$fileToUpload || !file_exists($fileToUpload)) {
+                    $fileToUpload = $file->get();
+                }
 
-            // 2. Fetch Cloudinary credentials from environment
-            $cloudName = env('CLOUDINARY_CLOUD_NAME');
-            $apiKey    = env('CLOUDINARY_API_KEY');
-            $apiSecret = env('CLOUDINARY_API_SECRET');
+                $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                $apiKey    = env('CLOUDINARY_API_KEY');
+                $apiSecret = env('CLOUDINARY_API_SECRET');
 
-            if (empty($cloudName) || empty($apiKey) || empty($apiSecret)) {
-                throw new \Exception('Missing Cloudinary credentials. Check your Render environment variables.');
-            }
+                if (empty($cloudName) || empty($apiKey) || empty($apiSecret)) {
+                    throw new \Exception('Missing Cloudinary credentials in environment.');
+                }
 
-            // 3. Prepare the API request
-            $url = "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload";
-            $timestamp = time();
-            $signature = sha1("folder=barn_supplies&timestamp={$timestamp}{$apiSecret}");
+                $url = "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload";
+                $timestamp = time();
+                $signature = sha1("folder=barn_supplies&timestamp={$timestamp}{$apiSecret}");
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, [
-                'file'       => curl_file_create($fileToUpload),
-                'api_key'    => $apiKey,
-                'timestamp'  => $timestamp,
-                'signature'  => $signature,
-                'folder'     => 'barn_supplies',
-            ]);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Add a timeout to prevent hanging
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, [
+                    'file'       => curl_file_create($fileToUpload),
+                    'api_key'    => $apiKey,
+                    'timestamp'  => $timestamp,
+                    'signature'  => $signature,
+                    'folder'     => 'barn_supplies',
+                ]);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
+                curl_close($ch);
 
-            if ($curlError) {
-                throw new \Exception('cURL error: ' . $curlError);
-            }
+                if ($curlError) {
+                    throw new \Exception('cURL error: ' . $curlError);
+                }
 
-            if ($httpCode !== 200) {
-                throw new \Exception("Cloudinary API returned HTTP {$httpCode}. Response: " . substr($response, 0, 500));
-            }
+                if ($httpCode !== 200) {
+                    throw new \Exception("Cloudinary API returned HTTP {$httpCode}. Response: " . substr($response, 0, 500));
+                }
 
-            $data = json_decode($response, true);
-            if (!isset($data['secure_url'])) {
-                throw new \Exception('Cloudinary response missing secure_url. Full response: ' . print_r($data, true));
-            }
+                $data = json_decode($response, true);
+                if (!isset($data['secure_url'])) {
+                    throw new \Exception('Cloudinary response missing secure_url.');
+                }
 
-            // Log success for monitoring
-            Log::info('Cloudinary upload successful', ['url' => $data['secure_url']]);
+                return $data['secure_url'];
 
-            return $data['secure_url'];
-
-        } catch (\Exception $e) {
-            $lastException = $e;
-            $attempt++;
-            Log::warning("Cloudinary upload attempt {$attempt} failed", ['error' => $e->getMessage()]);
-            if ($attempt < $maxRetries) {
-                sleep($delaySeconds);
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempt++;
+                if ($attempt < $maxRetries) {
+                    sleep($delaySeconds);
+                }
             }
         }
+
+        throw new \Exception('Cloudinary upload failed after ' . $maxRetries . ' attempts: ' . $lastException->getMessage());
     }
 
-    throw new \Exception('Cloudinary upload failed after ' . $maxRetries . ' attempts: ' . $lastException->getMessage());
-}
-
-    // Redirect unused methods
     public function show(BarnSupply $inventory) { return redirect()->route('inventory.index'); }
     public function create()                    { return redirect()->route('inventory.index'); }
     public function edit(BarnSupply $inventory) { return redirect()->route('inventory.index'); }
