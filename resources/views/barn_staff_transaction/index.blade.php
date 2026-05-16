@@ -327,11 +327,7 @@
                     data-category="{{ strtolower($catName) }}">
                     <td data-label="Image">
                         @if($supply->supply_img_path)
-                            <img src="{{ $supply->supply_img_path }}" 
-                                class="supply-thumb" 
-                                alt="{{ $supply->supply_name }}"
-                                onerror="this.onerror=null; this.style.display='none'; this.insertAdjacentHTML('afterend', '<div class=\"supply-thumb-placeholder\">📦</div>');"
-                                loading="lazy">
+                            <img src="{{ $supply->supply_img_path }}" class="supply-thumb" alt="{{ $supply->supply_name }}" loading="lazy">
                         @else
                             <div class="supply-thumb-placeholder">📦</div>
                         @endif
