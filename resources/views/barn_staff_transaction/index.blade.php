@@ -326,11 +326,11 @@
                 <tr data-name="{{ strtolower($supply->supply_name) }}" 
                     data-category="{{ strtolower($catName) }}">
                     <td data-label="Image">
-                       @if($supply->supply_img_path)
+                        @if($supply->supply_img_path)
                             <img src="{{ $supply->supply_img_path }}" 
                                 class="supply-thumb" 
                                 alt="{{ $supply->supply_name }}"
-                                onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\"supply-thumb-placeholder\">📦</div>';"
+                                onerror="this.onerror=null; this.style.display='none'; this.insertAdjacentHTML('afterend', '<div class=\"supply-thumb-placeholder\">📦</div>');"
                                 loading="lazy">
                         @else
                             <div class="supply-thumb-placeholder">📦</div>
@@ -358,7 +358,7 @@
                 </tr>
                 @endforelse
             </tbody>
-        </table>
+         </table>
     </div>
 </div>
 
@@ -377,7 +377,7 @@
             'supply_name'  => $s->supply_name,
             'category_id'  => $s->category_id,
             'stock'        => $s->stock,
-            'img_url'      => $s->supply_img_path ? asset('storage/' . $s->supply_img_path) : null,
+            'img_url'      => $s->supply_img_path,
         ];
     })) !!};
 
