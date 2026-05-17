@@ -9,6 +9,7 @@ use App\Models\InventoryTransaction;
 use App\Models\BarnSupplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class TransactionController extends Controller
@@ -26,6 +27,7 @@ class TransactionController extends Controller
     {
         $barn = $this->getStaffBarn();
 
+        // Paginated supplies for the TABLE
         $supplies = BarnSupply::with([
                 'category',
                 'transactions' => fn($q) => $q->with('user')->latest()->limit(1)
@@ -34,6 +36,13 @@ class TransactionController extends Controller
             ->where('supply_status', 'active')
             ->orderBy('supply_name')
             ->paginate(5);
+
+        // ALL supplies (unpaginated) for the modal JavaScript
+        $allSupplies = BarnSupply::with('category')
+            ->where('barn_id', $barn->id)
+            ->where('supply_status', 'active')
+            ->orderBy('supply_name')
+            ->get();
 
         $suppliers = BarnSupplier::where('barn_id', $barn->id)
                                  ->where('supplier_status', 'active')
@@ -50,9 +59,9 @@ class TransactionController extends Controller
             });
         });
 
-        return view('barn_staff_transaction.index', compact('barn', 'supplies', 'suppliersByCategory'));
+        return view('barn_staff_transaction.index', compact('barn', 'supplies', 'suppliersByCategory', 'allSupplies'));
     }
- 
+
     public function stockIn(Request $request)
     {
         $barn = $this->getStaffBarn();
@@ -81,20 +90,22 @@ class TransactionController extends Controller
             }
         }
 
-        $supply->increment('stock', $request->quantity);
+        DB::transaction(function () use ($supply, $request, $barn) {
+            $supply->increment('stock', $request->quantity);
 
-        InventoryTransaction::create([
-            'barn_id'          => $barn->id,
-            'user_id'          => Auth::id(),
-            'supply_id'        => $supply->id,
-            'supplier_id'      => $request->supplier_id,
-            'transaction_type' => 'stock_in',
-            'quantity'         => $request->quantity,
-            'unit_cost'        => $request->unit_cost,
-            'remarks'          => $request->remarks,
-            'created_at'       => now('Asia/Manila'),
-            'updated_at'       => now('Asia/Manila'),
-        ]);
+            InventoryTransaction::create([
+                'barn_id'          => $barn->id,
+                'user_id'          => Auth::id(),
+                'supply_id'        => $supply->id,
+                'supplier_id'      => $request->supplier_id,
+                'transaction_type' => 'stock_in',
+                'quantity'         => $request->quantity,
+                'unit_cost'        => $request->unit_cost,
+                'remarks'          => $request->remarks,
+                'created_at'       => now('Asia/Manila'),
+                'updated_at'       => now('Asia/Manila'),
+            ]);
+        });
 
         return redirect()->route('transactions.index')
                         ->with('success', "Stock In: {$request->quantity} unit(s) of \"{$supply->supply_name}\" added successfully.");
@@ -124,20 +135,22 @@ class TransactionController extends Controller
                              ->with('error', "Cannot deduct {$request->quantity} unit(s). Only {$supply->stock} available in stock.");
         }
 
-        $supply->decrement('stock', $request->quantity);
+        DB::transaction(function () use ($supply, $request, $barn) {
+            $supply->decrement('stock', $request->quantity);
 
-        InventoryTransaction::create([
-            'barn_id'          => $barn->id,
-            'user_id'          => Auth::id(),
-            'supply_id'        => $supply->id,
-            'supplier_id'      => null,
-            'transaction_type' => 'stock_out',
-            'quantity'         => $request->quantity,
-            'unit_cost'        => null,                    
-            'remarks'          => $request->remarks,
-            'created_at'       => now('Asia/Manila'),
-            'updated_at'       => now('Asia/Manila'),
-        ]);
+            InventoryTransaction::create([
+                'barn_id'          => $barn->id,
+                'user_id'          => Auth::id(),
+                'supply_id'        => $supply->id,
+                'supplier_id'      => null,          // allowed after SQL fix
+                'transaction_type' => 'stock_out',
+                'quantity'         => $request->quantity,
+                'unit_cost'        => null,          // allowed after SQL fix
+                'remarks'          => $request->remarks,
+                'created_at'       => now('Asia/Manila'),
+                'updated_at'       => now('Asia/Manila'),
+            ]);
+        });
 
         return redirect()->route('transactions.index')
                          ->with('success', "Stock Out: {$request->quantity} unit(s) of \"{$supply->supply_name}\" deducted successfully.");

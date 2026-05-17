@@ -405,17 +405,17 @@
 <div class="fb-toast" id="fbToast"></div>
 
 <script>
-    const suppliesData = {!! json_encode($supplies->map(function($s) {
-        $catName = $s->category->category_name ?? 'N/A';
-        return [
-            'id'           => $s->id,
-            'display_id'   => strtoupper(substr($catName, 0, 3)) . str_pad($s->id, 4, '0', STR_PAD_LEFT),
-            'supply_name'  => $s->supply_name,
-            'category_id'  => $s->category_id,
-            'stock'        => $s->stock,
-            'img_url'      => $s->supply_img_path,
-        ];
-    })) !!};
+    const suppliesData = {!! json_encode($allSupplies->map(function($s) {
+    $catName = $s->category->category_name ?? 'N/A';
+    return [
+        'id'           => $s->id,
+        'display_id'   => strtoupper(substr($catName, 0, 3)) . str_pad($s->id, 4, '0', STR_PAD_LEFT),
+        'supply_name'  => $s->supply_name,
+        'category_id'  => $s->category_id,
+        'stock'        => $s->stock,
+        'img_url'      => $s->supply_img_path,
+    ];
+})) !!};
 
     const suppliersByCategory = {!! json_encode($suppliersByCategory ?? []) !!};
 </script>
