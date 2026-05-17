@@ -265,7 +265,7 @@
         </table>
     </div>
 
-    @if(method_exists($staffs, 'links'))
+    @if(method_exists($staffs, 'links') && $staffs->lastPage() > 1)
         <div class="pagination-wrapper">
             {{ $staffs->withQueryString()->links('pagination::bootstrap-4') }}
         </div>

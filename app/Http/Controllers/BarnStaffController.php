@@ -23,7 +23,7 @@ class BarnStaffController extends Controller
         $staffs = BarnStaff::with('user')
                     ->where('barn_id', $barn->id)
                     ->orderBy('created_at', 'desc')
-                    ->get();
+                    ->paginate(5);
 
         $staffsData = $staffs->map(function ($s) {
             return [

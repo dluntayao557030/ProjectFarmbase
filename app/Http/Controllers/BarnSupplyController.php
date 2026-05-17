@@ -23,7 +23,7 @@ class BarnSupplyController extends Controller
         $supplies = BarnSupply::with(['category'])
             ->where('barn_id', $barn->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(5);
 
         $categories = Category::orderBy('category_name')->get();
 

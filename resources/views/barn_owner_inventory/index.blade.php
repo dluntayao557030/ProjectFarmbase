@@ -418,7 +418,7 @@
         </table>
     </div>
 
-    @if(method_exists($supplies, 'links'))
+    @if(method_exists($supplies, 'links') && $supplies->lastPage() > 1)
         <div class="pagination-wrapper">
             {{ $supplies->withQueryString()->links('pagination::bootstrap-4') }}
         </div>
