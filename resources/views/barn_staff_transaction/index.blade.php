@@ -178,6 +178,41 @@
     .fb-toast.show { display: flex; }
     .fb-toast.error { background: #c62828; }
 
+     /* PAGINATION STYLES */
+    .pagination-wrapper {
+        padding: 1rem 1.2rem;
+        border-top: 1px solid var(--green-border);
+        background: #ffffff;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        margin: 0;
+    }
+    .pagination .page-item .page-link {
+        background: #fff;
+        border: 1px solid var(--green-border);
+        color: var(--green-dark);
+        font-family: var(--font);
+        font-size: 0.8rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 5px;
+        transition: 0.1s;
+    }
+    .pagination .page-item.active .page-link {
+        background: var(--green-main);
+        border-color: var(--green-main);
+        color: #fff;
+    }
+    .pagination .page-item .page-link:hover {
+        background: var(--green-pale);
+        transform: translateY(-1px);
+    }
+
+
     /* Mobile Responsiveness Improvements */
     @media (max-width: 768px) {
         .page-header {
@@ -356,6 +391,11 @@
             </tbody>
          </table>
     </div>
+    @if(method_exists($suppliers, 'links') && $suppliers->lastPage() > 1)
+        <div class="pagination-wrapper">
+            {{ $suppliers->withQueryString()->links('pagination::bootstrap-4') }}
+        </div>
+    @endif
 </div>
 
 @include('barn_staff_transaction.modals.stock_in')

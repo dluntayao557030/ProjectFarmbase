@@ -33,7 +33,7 @@ class TransactionController extends Controller
             ->where('barn_id', $barn->id)
             ->where('supply_status', 'active')
             ->orderBy('supply_name')
-            ->get();
+            ->paginate(5);
 
         $suppliers = BarnSupplier::where('barn_id', $barn->id)
                                  ->where('supplier_status', 'active')
