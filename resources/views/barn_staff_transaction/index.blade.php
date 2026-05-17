@@ -391,9 +391,9 @@
             </tbody>
          </table>
     </div>
-    @if(method_exists($suppliers, 'links') && $suppliers->lastPage() > 1)
-        <div class="pagination-wrapper">
-            {{ $suppliers->withQueryString()->links('pagination::bootstrap-4') }}
+    @if(method_exists($supplies, 'links') && $supplies->lastPage() > 1)
+        <div class="pagination-wrapper" style="padding: 1rem 1.2rem; border-top: 1px solid var(--green-border); background: #ffffff;">
+            {{ $supplies->withQueryString()->links('pagination::bootstrap-4') }}
         </div>
     @endif
 </div>
